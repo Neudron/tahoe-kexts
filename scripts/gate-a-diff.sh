@@ -17,13 +17,24 @@ kext_binary() {
 
 echo "--- Building Tahoe export pool ($(sw_vers -productVersion)) ---"
 nm -gU -arch x86_64 /System/Library/Kernels/kernel | awk '{print $NF}' > "$OUT/tahoe-exports.raw"
+echo "kernel: $(wc -l < "$OUT/tahoe-exports.raw") symbols"
+
+# Core families (IOGraphicsFamily, IOPCIFamily, IOAcceleratorFamily2...) ship
+# only inside the kernel collections on modern macOS, not as on-disk binaries.
+for kc in /System/Library/KernelCollections/*.kc; do
+  [ -f "$kc" ] || continue
+  before=$(wc -l < "$OUT/tahoe-exports.raw")
+  nm -gU -arch x86_64 "$kc" 2>/dev/null | awk '{print $NF}' >> "$OUT/tahoe-exports.raw" || true
+  echo "$kc: $(( $(wc -l < "$OUT/tahoe-exports.raw") - before )) symbols"
+done
+
 find /System/Library/Extensions -name '*.kext' | while read -r k; do
   b=$(kext_binary "$k") || continue
   nm -gU -arch x86_64 "$b" 2>/dev/null | awk '{print $NF}' || true
 done >> "$OUT/tahoe-exports.raw"
 sort -u "$OUT/tahoe-exports.raw" > "$OUT/tahoe-exports.txt"
 rm "$OUT/tahoe-exports.raw"
-echo "export pool: $(wc -l < "$OUT/tahoe-exports.txt") symbols"
+echo "export pool total: $(wc -l < "$OUT/tahoe-exports.txt") unique symbols"
 
 echo "--- Diffing TGL kext imports ---"
 for k in "$KEXT_DIR"/*.kext; do
