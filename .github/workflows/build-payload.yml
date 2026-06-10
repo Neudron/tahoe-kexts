@@ -1,0 +1,79 @@
+name: Build Tahoe payload
+on: [push, workflow_dispatch]
+
+permissions:
+  contents: write
+
+jobs:
+  build-kexts:
+    # Mirrors the proven Neudron/NootedGreen build.yml (macos-15 arm64, forced x86_64)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Neudron/NootedGreen
+          path: nootedgreen
+      - name: Build NootedGreen (Release, x86_64)
+        working-directory: nootedgreen
+        run: xcodebuild -project NootedGreen.xcodeproj -configuration Release -arch x86_64 build
+      - name: Build HookCase (Release, x86_64)
+        working-directory: nootedgreen
+        # upstream sets ARCHS=$(NATIVE_ARCH_ACTUAL); must force x86_64 on arm64 runners
+        run: xcodebuild -project HookCase-master/HookCase.xcodeproj -configuration Release -arch x86_64 build
+      - name: Zip HookCase
+        run: cd nootedgreen/HookCase-master/build/Release && zip -qry HookCase-RELEASE.zip HookCase.kext
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kexts
+          path: |
+            nootedgreen/build/Release/NootedGreen-*-RELEASE.zip
+            nootedgreen/HookCase-master/build/Release/HookCase-RELEASE.zip
+
+  gate-a:
+    # Real Tahoe x86_64 — the OS the kexts must link against
+    runs-on: macos-26-intel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Neudron/NootedGreen
+          path: nootedgreen
+      - name: Runner OS
+        run: sw_vers && uname -m
+      - name: Gate-A symbol diff
+        run: ./scripts/gate-a-diff.sh nootedgreen/sle_Internal/le reports
+      - name: kextutil dry-link
+        run: ./scripts/dry-link.sh nootedgreen/sle_Internal/le reports
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gate-a-reports
+          path: reports/
+
+  package:
+    needs: [build-kexts, gate-a]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Neudron/NootedGreen
+          path: nootedgreen
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Assemble payload
+        run: ./scripts/package-payload.sh artifacts nootedgreen payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: payload
+          path: payload/
+      - name: Update 'latest' release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          (cd payload && zip -qry ../payload.zip .)
+          gh release create latest --title "Tahoe USB payload" \
+            --notes "Auto-built: NootedGreen+HookCase, TGL kexts+bundles, Gate-A reports" \
+            2>/dev/null || true
+          gh release upload latest payload.zip --clobber
