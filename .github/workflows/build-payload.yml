@@ -31,6 +31,7 @@ jobs:
 
   gate-a:
     # Real Tahoe x86_64 — the OS the kexts must link against
+    needs: build-kexts
     runs-on: macos-26-intel
     steps:
       - uses: actions/checkout@v4
@@ -40,10 +41,16 @@ jobs:
           path: nootedgreen
       - name: Runner OS
         run: sw_vers && uname -m
+      - uses: actions/download-artifact@v4
+        with:
+          name: kexts
+          path: kexts-art
+      - name: Unzip built kexts (HookCase is a declared dependency of the TGL FB kext)
+        run: cd kexts-art && find . -name '*.zip' -exec unzip -oq {} \; && ls -la
       - name: Gate-A symbol diff
         run: ./scripts/gate-a-diff.sh nootedgreen/sle_Internal/le reports
-      - name: kextutil dry-link
-        run: ./scripts/dry-link.sh nootedgreen/sle_Internal/le reports
+      - name: kmutil dry-link
+        run: ./scripts/dry-link.sh nootedgreen/sle_Internal/le reports kexts-art nootedgreen/Lilu.kext
       - uses: actions/upload-artifact@v4
         with:
           name: gate-a-reports
