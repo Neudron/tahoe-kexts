@@ -50,6 +50,8 @@ jobs:
       - name: Gate-A symbol diff
         run: ./scripts/gate-a-diff.sh nootedgreen/sle_Internal/le reports
       - name: kmutil dry-link
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: ./scripts/dry-link.sh nootedgreen/sle_Internal/le reports kexts-art nootedgreen/Lilu.kext
       - uses: actions/upload-artifact@v4
         with:
