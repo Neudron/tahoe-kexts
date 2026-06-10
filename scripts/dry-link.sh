@@ -59,7 +59,7 @@ args=(create --arch x86_64 --new aux
   --boot-path /System/Library/KernelCollections/BootKernelExtensions.kc
   --auxiliary-path /tmp/test-aux.kc
   --no-system-collection --no-authentication --no-authorization
-  --repository /Library/Extensions)
+  --explicit-only --repository /Library/Extensions)
 [ -n "$KDK_PATH" ] && args+=(--kdk "$KDK_PATH")
 for k in "$WORK"/*.kext; do
   args+=(--bundle-path "/Library/Extensions/$(basename "$k")")
