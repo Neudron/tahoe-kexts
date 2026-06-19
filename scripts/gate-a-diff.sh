@@ -45,4 +45,49 @@ for k in "$KEXT_DIR"/*.kext; do
   c++filt < "$OUT/$n.blockers.txt" > "$OUT/$n.blockers.demangled.txt"
   echo "$n: $(wc -l < "$OUT/$n.undef.txt") imports, $(wc -l < "$OUT/$n.blockers.txt") NOT exported by Tahoe (Gate-A blockers)"
 done
-# Report-only: blockers are the deliverable, not a CI failure.
+# Report-only: blockers are the deliverable, not a CI failure. Both TGL and ICL (fallback) kexts
+# are processed if present in KEXT_DIR, so the two blocker counts can be compared side-by-side.
+
+# Resolve a kext bundle's Info.plist (handles Contents/ and flat layouts).
+kext_plist() {
+  local kext="$1"
+  [ -f "$kext/Contents/Info.plist" ] && { echo "$kext/Contents/Info.plist"; return; }
+  [ -f "$kext/Info.plist" ] && { echo "$kext/Info.plist"; return; }
+  return 1
+}
+
+echo "--- PCI-match audit (which device IDs each kext natively matches) ---"
+# Proves the spoof is genuinely required: the leaked kexts match their own codename's id
+# (TGL 0x9A49 / ICL 0x8A52) but NEVER a real Raptor Lake 0xA7xx id, which is why DeviceProperties
+# must rewrite the iGPU's device-id. A future kext revision dropping the spoof-target id would
+# silently break the bring-up even with clean symbols — this surfaces that.
+for k in "$KEXT_DIR"/*.kext; do
+  [ -d "$k" ] || continue
+  n=$(basename "$k" .kext)
+  p=$(kext_plist "$k") || { echo "$n: no Info.plist"; continue; }
+  # IOPCIPrimaryMatch/IOPCIMatch values look like "0x9a498086 0x9a788086"; the low 16 bits are
+  # the device id, the high 16 (0x8086) the Intel vendor id.
+  grep -ioE 'IOPCI(Primary)?Match' "$p" >/dev/null || true
+  /usr/libexec/PlistBuddy -c 'Print :IOKitPersonalities' "$p" 2>/dev/null \
+    | grep -ioE '0x[0-9a-f]{4}8086' | sort -u \
+    | sed -E 's/^0x([0-9a-f]{4})8086$/0x\1/I' > "$OUT/$n.pcimatch.txt" || true
+  # Fallback for binary/compiled personalities: scan the Mach-O strings too.
+  if [ ! -s "$OUT/$n.pcimatch.txt" ]; then
+    b=$(kext_binary "$k") && strings "$b" 2>/dev/null \
+      | grep -ioE '0x[0-9a-f]{4}8086' | sort -u \
+      | sed -E 's/^0x([0-9a-f]{4})8086$/0x\1/I' > "$OUT/$n.pcimatch.txt" || true
+  fi
+  matched=$(tr '\n' ' ' < "$OUT/$n.pcimatch.txt")
+  case "$n" in
+    *TGL*) want=0x9a49 ;;
+    *ICL*) want=0x8a52 ;;
+    *)     want="" ;;
+  esac
+  note=""
+  [ -n "$want" ] && { grep -iq "$want" "$OUT/$n.pcimatch.txt" \
+      && note="spoof-target $want PRESENT" || note="WARNING spoof-target $want MISSING"; }
+  grep -iqE '0xa7[0-9a-f]{2}' "$OUT/$n.pcimatch.txt" \
+    && note="$note; WARNING native 0xA7xx matched (unexpected)" \
+    || note="$note; no native 0xA7xx (expected)"
+  echo "$n: matches [ ${matched}]; $note"
+done

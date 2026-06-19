@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  ICE LAKE FALLBACK DeviceProperties fragment for the Lenovo V15 G4-class board.
+  Use this ONLY if the Tiger Lake Gate-A blocker count is unfixable on Tahoe (Ice Lake kexts were
+  shipped by Apple in real Macs, so their symbols are likelier to survive). Worse architectural
+  match to Raptor Lake than TGL. See docs/raptor-lake-tahoe.md.
+
+  Data values are LITTLE-ENDIAN (base64), kept in sync with config/rpl-tgl-map.json "fallback":
+    AAPL,ig-platform-id  AABSig==   -> 0x8A520000  (bytes 00 00 52 8A)
+    device-id            UooAAA==   -> 0x8A52      (bytes 52 8A 00 00)
+-->
+<plist version="1.0">
+<dict>
+	<key>PciRoot(0x0)/Pci(0x2,0x0)</key>
+	<dict>
+		<key>AAPL,ig-platform-id</key>
+		<data>AABSig==</data>
+		<key>device-id</key>
+		<data>UooAAA==</data>
+		<key>enable-metal</key>
+		<data>AQAAAA==</data>
+		<key>framebuffer-patch-enable</key>
+		<data>AQAAAA==</data>
+		<key>model</key>
+		<string>Intel Iris Xe Graphics</string>
+	</dict>
+</dict>
+</plist>
