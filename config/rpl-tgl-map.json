@@ -1,0 +1,37 @@
+{
+  "_comment": "Single source of truth for the Raptor Lake (RPL-P/U Iris Xe) -> Tiger Lake spoof used to bring up iGPU graphics acceleration on macOS 26 Tahoe via NootedGreen. Every other artifact (DeviceProperties plist, boot-args, Gate-A probes, docs) derives from this file. See docs/raptor-lake-tahoe.md.",
+  "primary": {
+    "codename": "Tiger Lake",
+    "arch": "Gen12.1 Xe-LP",
+    "device_id": "0x9A49",
+    "ig_platform_id": "0x9A490000",
+    "fb_kext": "AppleIntelTGLGraphicsFramebuffer",
+    "accel_kext": "AppleIntelTGLGraphics"
+  },
+  "fallback": {
+    "_comment": "Ice Lake (Gen11) was shipped by Apple in real Macs, so its kexts are more likely to keep resolving symbols on Tahoe. Worse architectural match to RPL than TGL; use only if the TGL Gate-A blocker count is unfixable. See docs/raptor-lake-tahoe.md.",
+    "codename": "Ice Lake",
+    "arch": "Gen11",
+    "device_id": "0x8A52",
+    "ig_platform_id": "0x8A520000",
+    "fb_kext": "AppleIntelICLLPGraphicsFramebuffer",
+    "accel_kext": "AppleIntelICLGraphics"
+  },
+  "boot_args": ["-ngreentglwithgfx", "-disablegfxfirmware"],
+  "scheduler_type": 5,
+  "target": {
+    "codename": "Raptor Lake-P/U",
+    "arch": "Gen12.2 Xe-LP",
+    "marketing": "Iris Xe",
+    "board": "Lenovo V15 G4-class"
+  },
+  "rpl_device_ids": [
+    "0xA7A0",
+    "0xA7A1",
+    "0xA7A8",
+    "0xA7A9",
+    "0xA720",
+    "0xA721",
+    "0xA7A4"
+  ]
+}

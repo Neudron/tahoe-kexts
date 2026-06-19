@@ -6,6 +6,21 @@ CI: Gate-A analysis on real Tahoe + kext payload for the V15 G4 hackintosh
 
 This project performs Gate-A analysis and testing on kernel extensions (kexts) for the V15 G4 hackintosh system running on real Tahoe hardware. It serves as a continuous integration pipeline for validating kext payloads and ensuring compatibility and stability.
 
+## Raptor Lake iGPU acceleration on macOS 26 Tahoe
+
+The headline target is hardware graphics acceleration for a **Raptor Lake (RPL-P/U Iris Xe)** iGPU on
+**macOS 26 "Tahoe"**. macOS has no native driver for any Gen12 Intel iGPU, so the iGPU is
+**device-ID-spoofed to Tiger Lake** (`0x9A49` / `ig-platform-id 0x9A490000`) and driven by NootedGreen
+plus the leaked Apple Gen12 kexts, with an **Ice Lake fallback** if Tiger Lake symbols don't survive
+on Tahoe. The CI here validates the spoof config and the symbol/link compatibility, then packages a
+ready-to-install payload.
+
+- **[docs/raptor-lake-tahoe.md](docs/raptor-lake-tahoe.md)** — how the spoof works, the Gate-A → action
+  decision tree, and the NootedGreen source changes required.
+- **[docs/INSTALL-V15G4.md](docs/INSTALL-V15G4.md)** — end-user install runbook for the V15 G4 board.
+- **[config/rpl-tgl-map.json](config/rpl-tgl-map.json)** — single source of truth (device IDs, spoof
+  target, boot-args, scheduler) that the DeviceProperties fragment, scripts and docs derive from.
+
 ## Project Purpose
 
 - **Gate-A Analysis**: Conduct gate-level analysis on kernel extensions

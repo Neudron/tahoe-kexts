@@ -1,0 +1,20 @@
+# OpenCore boot-args for Raptor Lake (RPL-P/U Iris Xe) -> Tiger Lake spoof on macOS 26 Tahoe.
+# Set NVRAM > Add > 7C436110-AB2A-4BBB-A880-FE41995C9F82 > boot-args to the single line below.
+# Kept in sync with config/rpl-tgl-map.json "boot_args". See docs/INSTALL-V15G4.md.
+
+-ngreentglwithgfx -disablegfxfirmware
+
+# Flag meaning:
+#   -ngreentglwithgfx   load BOTH the TGL framebuffer and the TGL hardware-accelerator kexts
+#                       (recommended; -ngreentglfb is the framebuffer-only diagnostic mode)
+#   -disablegfxfirmware required on spoofed RPL: GuC/HuC firmware load is unsupported
+#
+# Scheduler: NootedGreen uses host preemptive scheduler type 5 on RPL/ADL. It is selected via the
+# NootedGreen property (ngreenSched=5), NOT a boot-arg. scheduler_type lives in rpl-tgl-map.json.
+#
+# Debug variants (append while bringing the system up; remove for daily use):
+#   -v keepsyms=1 debug=0x100 -liludbgall liludump=60 -NGreenDebug IGLogLevel=8
+#
+# Ice Lake fallback (only if the TGL Gate-A blocker count is unfixable): the boot-args are the same;
+# swap the DeviceProperties fragment to config/V15G4-DeviceProperties.icl.plist and install the ICL
+# kexts instead of the TGL kexts. See docs/raptor-lake-tahoe.md.

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  OpenCore DeviceProperties > Add fragment for the Lenovo V15 G4-class board.
+  Spoofs the Raptor Lake (RPL-P/U Iris Xe) iGPU to Tiger Lake (0x9A49) so NootedGreen can
+  drive it with the leaked Apple Gen12 GPU kexts on macOS 26 Tahoe.
+
+  Data values are LITTLE-ENDIAN (base64), kept in sync with config/rpl-tgl-map.json "primary":
+    AAPL,ig-platform-id  AABJmg==   -> 0x9A490000  (bytes 00 00 49 9A)
+    device-id            SZoAAA==   -> 0x9A49      (bytes 49 9A 00 00)
+    framebuffer-patch-enable AQAAAA== -> 0x00000001 (enable connector patching)
+
+  Merge this dict into your config.plist under DeviceProperties > Add. This is a fragment, not a
+  full config.plist. For the Ice Lake fallback, use V15G4-DeviceProperties.icl.plist instead.
+  See docs/INSTALL-V15G4.md.
+-->
+<plist version="1.0">
+<dict>
+	<key>PciRoot(0x0)/Pci(0x2,0x0)</key>
+	<dict>
+		<key>AAPL,ig-platform-id</key>
+		<data>AABJmg==</data>
+		<key>device-id</key>
+		<data>SZoAAA==</data>
+		<key>enable-metal</key>
+		<data>AQAAAA==</data>
+		<key>framebuffer-patch-enable</key>
+		<data>AQAAAA==</data>
+		<key>model</key>
+		<string>Intel Iris Xe Graphics</string>
+	</dict>
+</dict>
+</plist>

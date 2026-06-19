@@ -1,5 +1,13 @@
 name: Build Tahoe payload
-on: [push, workflow_dispatch]
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      spoof_target:
+        description: 'Spoof target (report labelling only; both kext sets validate the same way)'
+        type: choice
+        options: [TGL, ICL]
+        default: TGL
 
 permissions:
   contents: write
@@ -47,6 +55,8 @@ jobs:
           path: kexts-art
       - name: Unzip built kexts (HookCase is a declared dependency of the TGL FB kext)
         run: cd kexts-art && find . -name '*.zip' -exec unzip -oq {} \; && ls -la
+      - name: RPL config consistency check (gating — pure data, no hardware)
+        run: ./scripts/rpl-config-check.sh reports
       - name: Gate-A symbol diff
         run: ./scripts/gate-a-diff.sh nootedgreen/sle_Internal/le reports
       - name: kmutil dry-link
