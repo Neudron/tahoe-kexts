@@ -17,7 +17,10 @@
     "fb_kext": "AppleIntelICLLPGraphicsFramebuffer",
     "accel_kext": "AppleIntelICLGraphics"
   },
-  "boot_args": ["-ngreentglwithgfx", "-disablegfxfirmware"],
+  "boot_args": [
+    "-ngreentglwithgfx",
+    "-disablegfxfirmware"
+  ],
   "scheduler_type": 5,
   "target": {
     "codename": "Raptor Lake-P/U",
@@ -30,8 +33,11 @@
     "0xA7A1",
     "0xA7A8",
     "0xA7A9",
+    "0xA7AA",
+    "0xA7AB",
+    "0xA7AC",
+    "0xA7AD",
     "0xA720",
-    "0xA721",
-    "0xA7A4"
+    "0xA721"
   ]
 }
